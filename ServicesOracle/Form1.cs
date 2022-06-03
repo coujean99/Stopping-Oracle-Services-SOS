@@ -30,12 +30,12 @@ namespace ServicesOracle
         private void Form1_Load(object sender, EventArgs e)
         {
             if (serviceActifAuDemarrage == true)
-                btn_auDemarrage.Text = "Désactiver les services au démarrage";
+                btn_auDemarrage.Text = "DÃ©sactiver les services au dÃ©marrage";
             else
-                btn_auDemarrage.Text = "Activer les services au démarrage";
+                btn_auDemarrage.Text = "Activer les services au dÃ©marrage";
 
             if (serviceActif == true)
-                btn_etat.Text = "Désactiver les services";
+                btn_etat.Text = "DÃ©sactiver les services";
             else
                 btn_etat.Text = "Activer les services";
         }
@@ -58,7 +58,7 @@ namespace ServicesOracle
                 if (serviceActifAuDemarrage == false)
                     typeDemarrage = "auto";
                 else
-                    typeDemarrage = "disabled";
+                    typeDemarrage = "demand";
 
                 commandLine = string.Format("config {0} start= {1}", nomService, typeDemarrage);
                 Process.Start(serviceController, commandLine);
