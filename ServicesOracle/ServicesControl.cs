@@ -25,7 +25,7 @@ namespace OracleServices
 
         public bool StartingMethod()
         {
-            bool isServicesOnStartup = true;
+            bool isServicesOnStartup = RunningServicesOnStartup;
 
             var oracleServices =
                 from sc in ServiceController.GetServices()
@@ -35,16 +35,18 @@ namespace OracleServices
             foreach (ServiceController service in oracleServices)
             {
                 string serviceName = service.ServiceName;
-                string startupType;
+                string startupType = String.Empty;
                 string serviceController = "sc";
-                string commandLine;
+                string commandLine = String.Empty;
 
-                if (!this.RunningServicesOnStartup)
+                // If OracleServiceXE and OracleOraDB... doesn't have the same StartType or if they just have an other StartType
+                if (!this.RunningServicesOnStartup && service.StartType != ServiceStartMode.Automatic)
                 {
                     isServicesOnStartup = true;
                     startupType = "auto";
                 }
-                else
+
+                if (this.RunningServicesOnStartup && service.StartType != ServiceStartMode.Manual)
                 {
                     isServicesOnStartup = false;
                     startupType = "demand";
@@ -59,7 +61,7 @@ namespace OracleServices
 
         public bool PresentStates()
         {
-            bool isServiceOn = true;
+            bool isServiceOn = this.EnableServices;
 
             var oracleServices =
                 from sc in ServiceController.GetServices()
@@ -68,12 +70,13 @@ namespace OracleServices
 
             foreach (ServiceController service in oracleServices)
             {
-                if (this.EnableServices)
+                if (this.EnableServices && service.Status != ServiceControllerStatus.Stopped)
                 {
                     isServiceOn = false;
                     service.Stop();
                 }
-                else
+                
+                if (!this.EnableServices && service.Status != ServiceControllerStatus.Running)
                 {
                     isServiceOn = true;
                     service.Start();
