@@ -1,4 +1,4 @@
-namespace ServicesOracle
+namespace OracleServices
 {
     internal static class Program
     {

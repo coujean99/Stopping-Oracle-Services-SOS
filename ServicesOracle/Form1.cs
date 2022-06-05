@@ -2,88 +2,106 @@ using System.Diagnostics;
 using System.Security.Principal;
 using System.ServiceProcess;
 
-namespace ServicesOracle
+namespace OracleServices
 {
     public partial class Form1 : Form
     {
-        private bool serviceActifAuDemarrage;
-        private bool serviceActif;
+        public readonly ServiceController runningOracleService = new ServiceController("OracleServiceXE");
+        public readonly ServicesControl servicesControl = new ServicesControl();
+
+        public bool runningServicesOnStartup;
+        public bool enableServices;
 
         public Form1()
         {
             InitializeComponent();
 
-            ServiceController serviceOracleAuDemarrage = new ServiceController("OracleServiceXE");
-
-            if (serviceOracleAuDemarrage.StartType == ServiceStartMode.Automatic)
-                serviceActifAuDemarrage = true;
-            else
-                serviceActifAuDemarrage = false;
-
-            if (serviceOracleAuDemarrage.Status == ServiceControllerStatus.Running)
-                serviceActif = true;
-            else
-                serviceActif |= false;
+            runningServicesOnStartup = servicesControl.AreActiveOnWindowsStartup(runningOracleService);
+            enableServices = servicesControl.AreActiveRightNow(runningOracleService);
         }
 
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            if (serviceActifAuDemarrage == true)
-                btn_auDemarrage.Text = "Désactiver les services au démarrage";
-            else
-                btn_auDemarrage.Text = "Activer les services au démarrage";
+            btn_windowsStartup.Enabled = true;
+            btn_state.Enabled = true;
 
-            if (serviceActif == true)
-                btn_etat.Text = "Désactiver les services";
+            if (runningServicesOnStartup)
+                btn_windowsStartup.Text = "Disable Oracle services on startup";
             else
-                btn_etat.Text = "Activer les services";
+                btn_windowsStartup.Text = "Enable Oracle services on startup";
+
+            if (enableServices)
+                btn_state.Text = "Disable Oracle services";
+            else
+                btn_state.Text = "Enable Oracle services";
         }
 
 
-        private void btn_auDemarrage_Click(object sender, EventArgs e)
+        private void btn_windowsStartup_Click(object sender, EventArgs e)
         {
-            var servicesOracle =
-                from sc in ServiceController.GetServices()
-                where sc.ServiceName.StartsWith("OracleOra") || sc.ServiceName.Equals("OracleServiceXE")
-                select sc;
+            runningServicesOnStartup = servicesControl.StartingMethod();
 
-            foreach (ServiceController serviceOracle in servicesOracle)
-            {
-                string nomService = serviceOracle.ServiceName;
-                string typeDemarrage;
-                string serviceController = "C:\\Windows\\System32\\sc.exe";
-                string commandLine;
-
-                if (serviceActifAuDemarrage == false)
-                    typeDemarrage = "auto";
-                else
-                    typeDemarrage = "demand";
-
-                commandLine = string.Format("config {0} start= {1}", nomService, typeDemarrage);
-                Process.Start(serviceController, commandLine);
-            }
-
-            Application.Exit();
+            ButtonsRefresh("WindowsStartup");
         }
 
 
-        private void btn_etat_Click(object sender, EventArgs e)
+        private void btn_state_Click(object sender, EventArgs e)
         {
-            var servicesOracle =
-                from sc in ServiceController.GetServices()
-                where sc.ServiceName.StartsWith("OracleOra") || sc.ServiceName.Equals("OracleServiceXE")
-                select sc;
+            enableServices = servicesControl.PresentStates();
 
-            foreach (ServiceController service in servicesOracle)
+            ButtonsRefresh("BackgroundRun");
+        }
+
+        private void chk_backgroundRun_CheckedChanged(object sender, EventArgs e)
+        {
+            if (chk_backgroundRun.Checked)
             {
-                if (serviceActif == true)
-                    service.Stop();
-                else
-                    service.Start();
+                btn_windowsStartup.Enabled = false;
+                btn_state.Enabled = false;
+
+                if (runningServicesOnStartup)
+                    servicesControl.StartingMethod();
+
+                if (enableServices)
+                    servicesControl.PresentStates();
+
+                BackgroundRefresh.ThreadDelegation();
+            }
+            else
+                ButtonsRefresh("BothButtons");
+        }
+
+        public void ButtonsRefresh(string command)
+        {
+            int cooldownTime = 0;
+
+            if (command == "WindowsStartup" || command == "BothButtons")
+            {
+                btn_windowsStartup.Enabled = false;
+                btn_windowsStartup.Text = "Refreshing...";
+                cooldownTime = 3;
+
+                if (command == "BothButtons")
+                    btn_windowsStartup.Text = "Refreshing... please wait";
             }
 
-            Application.Exit();
+            if (command == "BackgroundRun" || command == "BothButtons")
+            {
+                btn_state.Enabled = false;
+                btn_state.Text = "Please wait 40 seconds";
+                cooldownTime = 40;
+
+                if (command == "BothButtons")
+                    btn_state.Text = "40 seconds to continue";
+            }
+
+            var t = Task.Run(async delegate { await Task.Delay(TimeSpan.FromSeconds(cooldownTime)); });
+            t.Wait();
+
+            this.Controls.Clear();
+            InitializeComponent();
+            Form1_Load(null, EventArgs.Empty);
         }
     }
 }
