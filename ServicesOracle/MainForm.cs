@@ -76,17 +76,6 @@ namespace OracleServices
         {
             int timeToWait = 0;
 
-            if (command == "BackgroundRun" || command == "BothButtons")
-            {
-                btn_state.Enabled = false;
-                btn_state.Text = "Refreshing... please wait";
-
-                if (command == "BothButtons")
-                    btn_state.Text = "40 seconds to continue";
-
-                timeToWait = 3;
-            }
-
             if (command == "WindowsStartup" || command == "BothButtons")
             {
                 btn_windowsStartup.Enabled = false;
@@ -95,10 +84,22 @@ namespace OracleServices
                 if (command == "BothButtons")
                     btn_windowsStartup.Text = "Refreshing... please wait";
 
+                timeToWait = 3;
+            }
+
+            if (command == "BackgroundRun" || command == "BothButtons")
+            {
+                btn_state.Enabled = false;
+                btn_state.Text = "Refreshing... please wait";
+
+                if (command == "BothButtons")
+                    btn_state.Text = "40 seconds to continue";
+
                 timeToWait = 40;
             }
 
-            var t = Task.Run(async delegate { await Task.Delay(timeToWait); });
+            // I tried to do it using ServiceControllerStatus but it's don't work...
+            var t = Task.Run(async delegate { await Task.Delay(TimeSpan.FromSeconds(timeToWait)); });
             t.Wait();
 
 
