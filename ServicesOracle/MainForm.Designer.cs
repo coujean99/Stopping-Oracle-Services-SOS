@@ -81,13 +81,14 @@
             this.chk_runAtStartup.TabIndex = 3;
             this.chk_runAtStartup.Text = "Run at Windows startup";
             this.chk_runAtStartup.UseVisualStyleBackColor = true;
+            this.chk_runAtStartup.CheckedChanged += new System.EventHandler(this.chk_runAtStartup_CheckedChanged);
             // 
             // systemTray
             // 
             this.systemTray.Icon = ((System.Drawing.Icon)(resources.GetObject("systemTray.Icon")));
             this.systemTray.Text = "System tray icon";
             this.systemTray.Visible = true;
-            this.systemTray.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.notifyIcon1_MouseDoubleClick);
+            this.systemTray.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.systemTray_MouseDoubleClick);
             // 
             // MainForm
             // 
@@ -99,6 +100,7 @@
             this.Controls.Add(this.btn_state);
             this.Controls.Add(this.btn_windowsStartup);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

@@ -1,3 +1,4 @@
+using Microsoft.Win32;
 using System.Diagnostics;
 using System.Security.Principal;
 using System.ServiceProcess;
@@ -19,7 +20,6 @@ namespace OracleServices
             runningServicesOnStartup = servicesControl.AreActiveOnWindowsStartup(runningOracleService);
             enableServices = servicesControl.AreActiveRightNow(runningOracleService);
 
-            systemTray.BalloonTipText = "Application Minimized";
             systemTray.BalloonTipTitle = "SOS";
         }
 
@@ -28,6 +28,9 @@ namespace OracleServices
         {
             btn_windowsStartup.Enabled = true;
             btn_state.Enabled = true;
+
+            chk_backgroundRun.Checked = Properties.Settings.Default.BackgroundRun;
+            chk_runAtStartup.Checked = Properties.Settings.Default.AtStartup;
 
             if (runningServicesOnStartup)
                 btn_windowsStartup.Text = "Disable Oracle services on startup";
@@ -56,6 +59,7 @@ namespace OracleServices
             ButtonsRefresh("BackgroundRun");
         }
 
+
         private void chk_backgroundRun_CheckedChanged(object sender, EventArgs e)
         {
             if (chk_backgroundRun.Checked)
@@ -74,6 +78,7 @@ namespace OracleServices
             else
                 ButtonsRefresh("BothButtons");
         }
+
 
         public void ButtonsRefresh(string command)
         {
@@ -101,7 +106,6 @@ namespace OracleServices
                 timeToWait = 40;
             }
 
-            // I tried to do it using ServiceControllerStatus but it's don't work...
             var t = Task.Run(async delegate { await Task.Delay(TimeSpan.FromSeconds(timeToWait)); });
             t.Wait();
 
@@ -111,26 +115,49 @@ namespace OracleServices
             Form1_Load(null, EventArgs.Empty);
         }
 
-        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            Environment.Exit(0);
-        }
 
+        // System Tray
         private void MainForm_Resize(object sender, EventArgs e)
         {
             if (this.WindowState == FormWindowState.Minimized)
             {
                 ShowInTaskbar = false;
                 systemTray.Visible = true;
-                //systemTray.ShowBalloonTip(1000);
             }
         }
 
-        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
+
+        private void systemTray_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             ShowInTaskbar = true;
             systemTray.Visible = true;
             WindowState = FormWindowState.Normal;
+        }
+
+
+        // On Windows Startup
+        private void chk_runAtStartup_CheckedChanged(object sender, EventArgs e)
+        {
+			//https://stackoverflow.com/questions/7394806/creating-scheduled-tasks
+            /*RegistryKey registryKey = Registry.CurrentUser.OpenSubKey
+            ("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+
+            if (chk_runAtStartup.Checked)
+            {
+                registryKey.SetValue("Stopping-Oracle-Services-SOS", Application.ExecutablePath.ToString());
+            }
+            else
+            {
+                registryKey.DeleteValue("Stopping-Oracle-Services-SOS");
+            }*/
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Properties.Settings.Default.BackgroundRun = chk_backgroundRun.Checked;
+            Properties.Settings.Default.AtStartup = chk_runAtStartup.Checked;
+            Properties.Settings.Default.Save();
+            Environment.Exit(0);
         }
     }
 }
