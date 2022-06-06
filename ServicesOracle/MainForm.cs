@@ -18,6 +18,9 @@ namespace OracleServices
 
             runningServicesOnStartup = servicesControl.AreActiveOnWindowsStartup(runningOracleService);
             enableServices = servicesControl.AreActiveRightNow(runningOracleService);
+
+            systemTray.BalloonTipText = "Application Minimized";
+            systemTray.BalloonTipTitle = "SOS";
         }
 
 
@@ -106,6 +109,28 @@ namespace OracleServices
             this.Controls.Clear();
             InitializeComponent();
             Form1_Load(null, EventArgs.Empty);
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Environment.Exit(0);
+        }
+
+        private void MainForm_Resize(object sender, EventArgs e)
+        {
+            if (this.WindowState == FormWindowState.Minimized)
+            {
+                ShowInTaskbar = false;
+                systemTray.Visible = true;
+                //systemTray.ShowBalloonTip(1000);
+            }
+        }
+
+        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            ShowInTaskbar = true;
+            systemTray.Visible = true;
+            WindowState = FormWindowState.Normal;
         }
     }
 }
