@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32.TaskScheduler;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -13,15 +14,18 @@ namespace OracleServices
         public bool RunningServicesOnStartup { get; set; }
         public bool EnableServices { get; set; }
 
+
         public bool AreActiveOnWindowsStartup(ServiceController runningOracleService)
         {
             return this.RunningServicesOnStartup = runningOracleService.StartType == ServiceStartMode.Automatic;
         }
 
+
         public bool AreActiveRightNow(ServiceController runningOracleService)
         {
             return this.EnableServices = runningOracleService.Status == ServiceControllerStatus.Running;
         }
+
 
         public bool StartingMethod()
         {
@@ -59,6 +63,7 @@ namespace OracleServices
             return this.RunningServicesOnStartup = isServicesOnStartup;
         }
 
+
         public bool PresentStates()
         {
             bool isServiceOn = this.EnableServices;
@@ -84,6 +89,28 @@ namespace OracleServices
             }
 
             return this.EnableServices = isServiceOn;
+        }
+
+
+        public void TaskSheduler(bool toAddInTS)
+        {
+            using (TaskService ts = new TaskService())
+            {
+                if (toAddInTS)
+                {
+                    TaskDefinition td = ts.NewTask();
+                    td.RegistrationInfo.Author = "SOS";
+                    td.RegistrationInfo.Description = "Will run SOS at Windows startup";
+                    td.Principal.RunLevel = TaskRunLevel.Highest;
+                    td.Triggers.Add(new LogonTrigger());
+                    td.Actions.Add(new ExecAction(Application.ExecutablePath));
+                    ts.RootFolder.RegisterTaskDefinition(@"StoppingOracleServices", td);
+                }
+                else
+                {
+                    ts.RootFolder.DeleteTask("StoppingOracleServices");
+                }
+            }
         }
     }
 }

@@ -1,6 +1,5 @@
-using Microsoft.Win32;
+using Task = System.Threading.Tasks.Task;
 using System.Diagnostics;
-using System.Security.Principal;
 using System.ServiceProcess;
 
 namespace OracleServices
@@ -31,6 +30,9 @@ namespace OracleServices
 
             chk_backgroundRun.Checked = Properties.Settings.Default.BackgroundRun;
             chk_runAtStartup.Checked = Properties.Settings.Default.AtStartup;
+
+            if (chk_runAtStartup.Checked)
+                this.WindowState = FormWindowState.Minimized;
 
             if (runningServicesOnStartup)
                 btn_windowsStartup.Text = "Disable Oracle services on startup";
@@ -82,7 +84,8 @@ namespace OracleServices
 
         public void ButtonsRefresh(string command)
         {
-            int timeToWait = 0;
+            const int WAITING_TIME_BETWEEN_SCANS = 3;
+            Stopwatch waitingTimer = new Stopwatch();
 
             if (command == "WindowsStartup" || command == "BothButtons")
             {
@@ -91,8 +94,6 @@ namespace OracleServices
 
                 if (command == "BothButtons")
                     btn_windowsStartup.Text = "Refreshing... please wait";
-
-                timeToWait = 3;
             }
 
             if (command == "BackgroundRun" || command == "BothButtons")
@@ -102,13 +103,18 @@ namespace OracleServices
 
                 if (command == "BothButtons")
                     btn_state.Text = "40 seconds to continue";
-
-                timeToWait = 40;
             }
 
-            var t = Task.Run(async delegate { await Task.Delay(TimeSpan.FromSeconds(timeToWait)); });
-            t.Wait();
+            waitingTimer.Start();
+            while (true)
+            {
+                runningOracleService.Refresh();
+                while (waitingTimer.Elapsed.TotalSeconds < WAITING_TIME_BETWEEN_SCANS) { }
+                if (runningOracleService.Status == ServiceControllerStatus.Running || runningOracleService.Status == ServiceControllerStatus.Stopped) break;
+            }
+            waitingTimer.Stop();
 
+            Debug.WriteLine(runningOracleService.Status);
 
             this.Controls.Clear();
             InitializeComponent();
@@ -138,25 +144,17 @@ namespace OracleServices
         // On Windows Startup
         private void chk_runAtStartup_CheckedChanged(object sender, EventArgs e)
         {
-			//https://stackoverflow.com/questions/7394806/creating-scheduled-tasks
-            /*RegistryKey registryKey = Registry.CurrentUser.OpenSubKey
-            ("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
-
-            if (chk_runAtStartup.Checked)
-            {
-                registryKey.SetValue("Stopping-Oracle-Services-SOS", Application.ExecutablePath.ToString());
-            }
-            else
-            {
-                registryKey.DeleteValue("Stopping-Oracle-Services-SOS");
-            }*/
+            servicesControl.TaskSheduler(chk_runAtStartup.Checked);
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            systemTray.Visible = false;
+
             Properties.Settings.Default.BackgroundRun = chk_backgroundRun.Checked;
             Properties.Settings.Default.AtStartup = chk_runAtStartup.Checked;
             Properties.Settings.Default.Save();
+
             Environment.Exit(0);
         }
     }
