@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.ServiceProcess;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace OracleServices
 {
@@ -15,19 +14,14 @@ namespace OracleServices
         public bool EnableServices { get; set; }
 
 
-        public bool AreActiveOnWindowsStartup(ServiceController runningOracleService)
+        public void StateAndStartTypeServices(ServiceController runningOracleService)
         {
-            return this.RunningServicesOnStartup = runningOracleService.StartType == ServiceStartMode.Automatic;
+            this.RunningServicesOnStartup = runningOracleService.StartType == ServiceStartMode.Automatic;
+            this.EnableServices = runningOracleService.Status == ServiceControllerStatus.Running;
         }
 
 
-        public bool AreActiveRightNow(ServiceController runningOracleService)
-        {
-            return this.EnableServices = runningOracleService.Status == ServiceControllerStatus.Running;
-        }
-
-
-        public bool StartingMethod()
+        public void StartingMethod()
         {
             bool isServicesOnStartup = RunningServicesOnStartup;
 
@@ -60,11 +54,11 @@ namespace OracleServices
                 Process.Start(serviceController, commandLine);
             }
 
-            return this.RunningServicesOnStartup = isServicesOnStartup;
+            this.RunningServicesOnStartup = isServicesOnStartup;
         }
 
 
-        public bool PresentStates()
+        public void PresentStates()
         {
             bool isServiceOn = this.EnableServices;
 
@@ -88,7 +82,7 @@ namespace OracleServices
                 }
             }
 
-            return this.EnableServices = isServiceOn;
+            this.EnableServices = isServiceOn;
         }
 
 
@@ -107,10 +101,26 @@ namespace OracleServices
                     ts.RootFolder.RegisterTaskDefinition(@"StoppingOracleServices", td);
                 }
                 else
-                {
                     ts.RootFolder.DeleteTask("StoppingOracleServices");
-                }
             }
+        }
+
+
+        public void RefreshButtonsAwait(ServiceController runningOracleService)
+        {
+            const int WAITING_TIME_BETWEEN_SCANS = 3;
+            Stopwatch waitingTimer = new Stopwatch();
+
+            waitingTimer.Start();
+            while (true)
+            {
+                runningOracleService.Refresh();
+                while (waitingTimer.Elapsed.TotalSeconds < WAITING_TIME_BETWEEN_SCANS) { }
+                if (runningOracleService.Status == ServiceControllerStatus.Running || runningOracleService.Status == ServiceControllerStatus.Stopped) break;
+            }
+            waitingTimer.Stop();
+
+            Debug.WriteLine(runningOracleService.Status);
         }
     }
 }

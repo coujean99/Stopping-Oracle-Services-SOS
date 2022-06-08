@@ -9,21 +9,11 @@ namespace OracleServices
 {
     public static class BackgroundRefresh
     {
-        public static void ThreadDelegation()
-        {
-            ThreadStart threadDelegation = new ThreadStart(ThreadLoop.SearchLoop);
-            Thread newThread = new Thread(threadDelegation);
-            newThread.Start();
-        }
-    }
-
-    public class ThreadLoop
-    {
-        public static void SearchLoop()
+        public static async Task SearchLoop(CancellationToken token)
         {
             ServicesControl servicesControl = new ServicesControl();
 
-            while (true)
+            while (!token.IsCancellationRequested)
             {
                 Process[] processName = Process.GetProcessesByName("sqldeveloper64W");
 
@@ -46,8 +36,22 @@ namespace OracleServices
                     }
                 }
 
-                Thread.Sleep(4000);
+                await Task.Delay(4000);
             }
+        }
+
+
+        public static void StartSearchLoop()
+        {
+            var cts = new CancellationTokenSource();
+            _ = SearchLoop(cts.Token);
+        }
+
+        public static void StopSearchLoop()
+        {
+            var cts = new CancellationTokenSource();
+            cts.Cancel();
+            _ = SearchLoop(cts.Token);
         }
     }
 }

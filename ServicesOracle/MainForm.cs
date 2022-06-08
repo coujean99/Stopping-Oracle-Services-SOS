@@ -1,4 +1,3 @@
-using Task = System.Threading.Tasks.Task;
 using System.Diagnostics;
 using System.ServiceProcess;
 
@@ -9,15 +8,11 @@ namespace OracleServices
         public readonly ServiceController runningOracleService = new ServiceController("OracleServiceXE");
         public readonly ServicesControl servicesControl = new ServicesControl();
 
-        public bool runningServicesOnStartup;
-        public bool enableServices;
-
         public MainForm()
         {
             InitializeComponent();
 
-            runningServicesOnStartup = servicesControl.AreActiveOnWindowsStartup(runningOracleService);
-            enableServices = servicesControl.AreActiveRightNow(runningOracleService);
+            servicesControl.StateAndStartTypeServices(runningOracleService);
 
             systemTray.BalloonTipTitle = "SOS";
         }
@@ -25,21 +20,31 @@ namespace OracleServices
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            btn_windowsStartup.Enabled = true;
-            btn_state.Enabled = true;
-
             chk_backgroundRun.Checked = Properties.Settings.Default.BackgroundRun;
             chk_runAtStartup.Checked = Properties.Settings.Default.AtStartup;
 
+            TextButtonsRefresh();
+
+            if (chk_backgroundRun.Checked)
+                chk_backgroundRun_CheckedChanged(null, EventArgs.Empty);
+
+
             if (chk_runAtStartup.Checked)
                 this.WindowState = FormWindowState.Minimized;
+        }
 
-            if (runningServicesOnStartup)
+
+        public void TextButtonsRefresh()
+        {
+            btn_windowsStartup.Enabled = true;
+            btn_state.Enabled = true;
+
+            if (servicesControl.RunningServicesOnStartup)
                 btn_windowsStartup.Text = "Disable Oracle services on startup";
             else
                 btn_windowsStartup.Text = "Enable Oracle services on startup";
 
-            if (enableServices)
+            if (servicesControl.EnableServices)
                 btn_state.Text = "Disable Oracle services";
             else
                 btn_state.Text = "Enable Oracle services";
@@ -48,17 +53,17 @@ namespace OracleServices
 
         private void btn_windowsStartup_Click(object sender, EventArgs e)
         {
-            runningServicesOnStartup = servicesControl.StartingMethod();
+            servicesControl.StartingMethod();
 
-            ButtonsRefresh("WindowsStartup");
+            _ = RefreshButtons("WindowsStartup");
         }
 
 
         private void btn_state_Click(object sender, EventArgs e)
         {
-            enableServices = servicesControl.PresentStates();
+            servicesControl.PresentStates();
 
-            ButtonsRefresh("BackgroundRun");
+            _ = RefreshButtons("BackgroundRun");
         }
 
 
@@ -69,24 +74,24 @@ namespace OracleServices
                 btn_windowsStartup.Enabled = false;
                 btn_state.Enabled = false;
 
-                if (runningServicesOnStartup)
+                if (servicesControl.RunningServicesOnStartup)
                     servicesControl.StartingMethod();
 
-                if (enableServices)
+                if (servicesControl.EnableServices)
                     servicesControl.PresentStates();
 
-                BackgroundRefresh.ThreadDelegation();
+                BackgroundRefresh.StartSearchLoop();
             }
             else
-                ButtonsRefresh("BothButtons");
+            {
+                BackgroundRefresh.StopSearchLoop();
+                _ = RefreshButtons("BothButtons");
+            }
         }
 
 
-        public void ButtonsRefresh(string command)
+        public async Task RefreshButtons(string command)
         {
-            const int WAITING_TIME_BETWEEN_SCANS = 3;
-            Stopwatch waitingTimer = new Stopwatch();
-
             if (command == "WindowsStartup" || command == "BothButtons")
             {
                 btn_windowsStartup.Enabled = false;
@@ -105,20 +110,11 @@ namespace OracleServices
                     btn_state.Text = "40 seconds to continue";
             }
 
-            waitingTimer.Start();
-            while (true)
-            {
-                runningOracleService.Refresh();
-                while (waitingTimer.Elapsed.TotalSeconds < WAITING_TIME_BETWEEN_SCANS) { }
-                if (runningOracleService.Status == ServiceControllerStatus.Running || runningOracleService.Status == ServiceControllerStatus.Stopped) break;
-            }
-            waitingTimer.Stop();
+            await Task.Run(() => servicesControl.RefreshButtonsAwait(runningOracleService));
 
-            Debug.WriteLine(runningOracleService.Status);
+            servicesControl.StateAndStartTypeServices(runningOracleService);
 
-            this.Controls.Clear();
-            InitializeComponent();
-            Form1_Load(null, EventArgs.Empty);
+            TextButtonsRefresh();
         }
 
 
@@ -142,10 +138,9 @@ namespace OracleServices
 
 
         // On Windows Startup
-        private void chk_runAtStartup_CheckedChanged(object sender, EventArgs e)
-        {
+        private void chk_runAtStartup_CheckedChanged(object sender, EventArgs e) =>
             servicesControl.TaskSheduler(chk_runAtStartup.Checked);
-        }
+
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
