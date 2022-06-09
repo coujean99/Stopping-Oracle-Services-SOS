@@ -14,7 +14,16 @@ namespace OracleServices
 
             servicesControl.StateAndStartTypeServices(runningOracleService);
 
-            systemTray.BalloonTipTitle = "SOS";
+            // Fixed the window size for the title;
+            // Now icon in system tra change color when "Run program in background" is checked;
+            // A popup shows when the service is running;
+
+            // Fixed the token that was not stopping;
+            // Fixed the background loop that was receiving a bad value about if the service was running
+            // Fixed a glitch that don't stop the thread if we check and uncheck "Run program in background" too fast
+            // Useless code removed from the old structure that was not accurate anymore
+
+            // It still freeze a bit when come the time to generate the popup at the right moment but I think that we can deal with it
         }
 
 
@@ -53,40 +62,67 @@ namespace OracleServices
 
         private void btn_windowsStartup_Click(object sender, EventArgs e)
         {
-            servicesControl.StartingMethod();
-
-            _ = RefreshButtons("WindowsStartup");
+            servicesControl.BootStartingMethod(!servicesControl.RunningServicesOnStartup);
+            RefreshButtons("WindowsStartup");
         }
 
 
         private void btn_state_Click(object sender, EventArgs e)
         {
-            servicesControl.PresentStates();
-
-            _ = RefreshButtons("BackgroundRun");
+            servicesControl.StartStopServices(!servicesControl.EnableServices);
+            RefreshButtons("BackgroundRun");
         }
 
 
         private void chk_backgroundRun_CheckedChanged(object sender, EventArgs e)
         {
-            if (chk_backgroundRun.Checked)
+            bool eventAllowed = true;
+
+            if (eventAllowed)
             {
-                btn_windowsStartup.Enabled = false;
-                btn_state.Enabled = false;
+                if (chk_backgroundRun.Checked)
+                {
+                    systemTray.Icon = Properties.Resources.auto_stopped_icon;
+                    btn_windowsStartup.Enabled = false;
+                    btn_state.Enabled = false;
 
-                if (servicesControl.RunningServicesOnStartup)
-                    servicesControl.StartingMethod();
+                    servicesControl.BootStartingMethod(false);
+                    BackgroundRefresh.StartSearchLoop(servicesControl);
+                }
+                else
+                {
+                    if (Process.GetProcessesByName("sqldeveloper64W").Length != 0)
+                    {
+                        eventAllowed = false;
+                        chk_backgroundRun.Checked = true;
+                    }
 
-                if (servicesControl.EnableServices)
-                    servicesControl.PresentStates();
+                    if (Process.GetProcessesByName("sqldeveloper64W").Length == 0)
+                    {
+                        BackgroundRefresh.StopSearchLoop(servicesControl);
+                        RefreshButtons("BothButtons");
+                    }
+                }
+            }
+        }
 
-                BackgroundRefresh.StartSearchLoop();
+
+        public void SystemTrayIconAndNotifications(bool run)
+        {
+            systemTray.BalloonTipTitle = "Stopping Oracle Services - SOS";
+            
+            if (run)
+            {
+                systemTray.Icon = Properties.Resources.auto_running_icon;
+                systemTray.BalloonTipText = "Oracle services are now running!";
             }
             else
             {
-                BackgroundRefresh.StopSearchLoop();
-                _ = RefreshButtons("BothButtons");
+                systemTray.Icon = Properties.Resources.auto_stopped_icon;
+                systemTray.BalloonTipText = "Oracle services are now stopped!";
             }
+
+            systemTray.ShowBalloonTip(10);
         }
 
 
@@ -96,18 +132,12 @@ namespace OracleServices
             {
                 btn_windowsStartup.Enabled = false;
                 btn_windowsStartup.Text = "Refreshing...";
-
-                if (command == "BothButtons")
-                    btn_windowsStartup.Text = "Refreshing... please wait";
             }
 
             if (command == "BackgroundRun" || command == "BothButtons")
             {
                 btn_state.Enabled = false;
                 btn_state.Text = "Refreshing... please wait";
-
-                if (command == "BothButtons")
-                    btn_state.Text = "40 seconds to continue";
             }
 
             await Task.Run(() => servicesControl.RefreshButtonsAwait(runningOracleService));

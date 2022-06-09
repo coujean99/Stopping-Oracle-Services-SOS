@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace OracleServices
 {
     public static class BackgroundRefresh
     {
-        public static async Task SearchLoop(CancellationToken token)
-        {
-            ServicesControl servicesControl = new ServicesControl();
+        private static MainForm mainForm = new MainForm();
+        private static CancellationTokenSource cts;
 
+        public static async Task SearchLoop(CancellationToken token, ServicesControl servicesControl)
+        {
             while (!token.IsCancellationRequested)
             {
                 Process[] processName = Process.GetProcessesByName("sqldeveloper64W");
@@ -20,19 +20,19 @@ namespace OracleServices
                 if (processName.Length == 0)
                 {
                     Debug.WriteLine("nothing");
-                    if (servicesControl.EnableServices == true)
+                    if (servicesControl.EnableServices)
                     {
-                        servicesControl.PresentStates();
-                        servicesControl.EnableServices = false;
+                        servicesControl.StartStopServices(false);
+                        mainForm.SystemTrayIconAndNotifications(false);
                     }
                 }
                 else
                 {
                     Debug.WriteLine("run");
-                    if (servicesControl.EnableServices == false)
+                    if (!servicesControl.EnableServices)
                     {
-                        servicesControl.PresentStates();
-                        servicesControl.EnableServices = true;
+                        servicesControl.StartStopServices(true);
+                        mainForm.SystemTrayIconAndNotifications(true);
                     }
                 }
 
@@ -41,17 +41,21 @@ namespace OracleServices
         }
 
 
-        public static void StartSearchLoop()
+        public static void StartSearchLoop(ServicesControl servicesControl)
         {
-            var cts = new CancellationTokenSource();
-            _ = SearchLoop(cts.Token);
+            try
+            {
+                cts.Cancel();
+            }
+            catch (NullReferenceException e) { } // If the checkbox is checked and unchecked too fast
+            cts = new CancellationTokenSource();
+            SearchLoop(cts.Token, servicesControl);
         }
 
-        public static void StopSearchLoop()
+        public static void StopSearchLoop(ServicesControl servicesControl)
         {
-            var cts = new CancellationTokenSource();
             cts.Cancel();
-            _ = SearchLoop(cts.Token);
+            SearchLoop(cts.Token, servicesControl);
         }
     }
 }

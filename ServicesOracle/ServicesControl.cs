@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32.TaskScheduler;
+﻿using Task = System.Threading.Tasks.Task;
+using Microsoft.Win32.TaskScheduler;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,10 +22,8 @@ namespace OracleServices
         }
 
 
-        public void StartingMethod()
+        public void BootStartingMethod(bool startupRun)
         {
-            bool isServicesOnStartup = RunningServicesOnStartup;
-
             var oracleServices =
                 from sc in ServiceController.GetServices()
                 where sc.ServiceName.StartsWith("OracleOra") || sc.ServiceName.Equals("OracleServiceXE")
@@ -37,31 +36,26 @@ namespace OracleServices
                 string serviceController = "sc";
                 string commandLine = String.Empty;
 
-                // If OracleServiceXE and OracleOraDB... doesn't have the same StartType or if they just have an other StartType
-                if (!this.RunningServicesOnStartup && service.StartType != ServiceStartMode.Automatic)
+                if (startupRun)
                 {
-                    isServicesOnStartup = true;
+                    this.RunningServicesOnStartup = true;
                     startupType = "auto";
                 }
 
-                if (this.RunningServicesOnStartup && service.StartType != ServiceStartMode.Manual)
+                if (!startupRun)
                 {
-                    isServicesOnStartup = false;
+                    this.RunningServicesOnStartup = false;
                     startupType = "demand";
                 }
 
                 commandLine = string.Format("config {0} start= {1}", serviceName, startupType);
                 Process.Start(serviceController, commandLine);
             }
-
-            this.RunningServicesOnStartup = isServicesOnStartup;
         }
 
 
-        public void PresentStates()
+        public void StartStopServices(bool toRunServices)
         {
-            bool isServiceOn = this.EnableServices;
-
             var oracleServices =
                 from sc in ServiceController.GetServices()
                 where sc.ServiceName.StartsWith("OracleOra") || sc.ServiceName.Equals("OracleServiceXE")
@@ -69,20 +63,21 @@ namespace OracleServices
 
             foreach (ServiceController service in oracleServices)
             {
-                if (this.EnableServices && service.Status != ServiceControllerStatus.Stopped)
+                if (!toRunServices && service.Status != ServiceControllerStatus.Stopped)
                 {
-                    isServiceOn = false;
+                    this.EnableServices = false;
                     service.Stop();
                 }
-                
-                if (!this.EnableServices && service.Status != ServiceControllerStatus.Running)
+
+                if (toRunServices && service.Status != ServiceControllerStatus.Running)
                 {
-                    isServiceOn = true;
+                    this.EnableServices = true;
                     service.Start();
                 }
-            }
 
-            this.EnableServices = isServiceOn;
+                if (service.DisplayName.Equals("OracleServiceXE"))
+                    RefreshButtonsAwait(service);
+            }
         }
 
 
