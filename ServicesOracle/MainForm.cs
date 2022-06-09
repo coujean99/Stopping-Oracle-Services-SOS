@@ -13,17 +13,6 @@ namespace OracleServices
             InitializeComponent();
 
             servicesControl.StateAndStartTypeServices(runningOracleService);
-
-            // Fixed the window size for the title;
-            // Now icon in system tra change color when "Run program in background" is checked;
-            // A popup shows when the service is running;
-
-            // Fixed the token that was not stopping;
-            // Fixed the background loop that was receiving a bad value about if the service was running
-            // Fixed a glitch that don't stop the thread if we check and uncheck "Run program in background" too fast
-            // Useless code removed from the old structure that was not accurate anymore
-
-            // It still freeze a bit when come the time to generate the popup at the right moment but I think that we can deal with it
         }
 
 
