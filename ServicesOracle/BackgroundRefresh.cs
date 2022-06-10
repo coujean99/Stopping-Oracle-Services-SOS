@@ -8,10 +8,9 @@ namespace OracleServices
 {
     public static class BackgroundRefresh
     {
-        private static MainForm mainForm = new MainForm();
         private static CancellationTokenSource cts;
 
-        public static async Task SearchLoop(CancellationToken token, ServicesControl servicesControl)
+        public static async Task SearchLoop(CancellationToken token, ServicesControl servicesControl, MainForm mainForm)
         {
             while (!token.IsCancellationRequested)
             {
@@ -22,6 +21,7 @@ namespace OracleServices
                     Debug.WriteLine("nothing");
                     if (servicesControl.EnableServices)
                     {
+                        mainForm.PendingServicesNotification(false);
                         servicesControl.StartStopServices(false);
                         mainForm.SystemTrayIconAndNotifications(false);
                     }
@@ -31,6 +31,7 @@ namespace OracleServices
                     Debug.WriteLine("run");
                     if (!servicesControl.EnableServices)
                     {
+                        mainForm.PendingServicesNotification(true);
                         servicesControl.StartStopServices(true);
                         mainForm.SystemTrayIconAndNotifications(true);
                     }
@@ -41,7 +42,7 @@ namespace OracleServices
         }
 
 
-        public static void StartSearchLoop(ServicesControl servicesControl)
+        public static void StartSearchLoop(ServicesControl servicesControl, MainForm mainForm)
         {
             try
             {
@@ -49,13 +50,13 @@ namespace OracleServices
             }
             catch (NullReferenceException e) { } // If the checkbox is checked and unchecked too fast
             cts = new CancellationTokenSource();
-            SearchLoop(cts.Token, servicesControl);
+            SearchLoop(cts.Token, servicesControl, mainForm);
         }
 
-        public static void StopSearchLoop(ServicesControl servicesControl)
+        public static void StopSearchLoop(ServicesControl servicesControl, MainForm mainForm)
         {
             cts.Cancel();
-            SearchLoop(cts.Token, servicesControl);
+            SearchLoop(cts.Token, servicesControl, mainForm);
         }
     }
 }

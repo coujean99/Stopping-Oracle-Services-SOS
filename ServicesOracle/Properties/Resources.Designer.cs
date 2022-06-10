@@ -63,6 +63,16 @@ namespace OracleServices.Properties {
         /// <summary>
         ///   Recherche une ressource localisée de type System.Drawing.Icon semblable à (Icône).
         /// </summary>
+        internal static System.Drawing.Icon auto_pending_icon {
+            get {
+                object obj = ResourceManager.GetObject("auto_pending_icon", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Icon semblable à (Icône).
+        /// </summary>
         internal static System.Drawing.Icon auto_running_icon {
             get {
                 object obj = ResourceManager.GetObject("auto_running_icon", resourceCulture);

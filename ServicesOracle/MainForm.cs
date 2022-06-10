@@ -13,6 +13,8 @@ namespace OracleServices
             InitializeComponent();
 
             servicesControl.StateAndStartTypeServices(runningOracleService);
+
+            systemTray.BalloonTipTitle = "Stopping Oracle Services - SOS";
         }
 
 
@@ -76,7 +78,7 @@ namespace OracleServices
                     btn_state.Enabled = false;
 
                     servicesControl.BootStartingMethod(false);
-                    BackgroundRefresh.StartSearchLoop(servicesControl);
+                    BackgroundRefresh.StartSearchLoop(servicesControl, this);
                 }
                 else
                 {
@@ -88,7 +90,7 @@ namespace OracleServices
 
                     if (Process.GetProcessesByName("sqldeveloper64W").Length == 0)
                     {
-                        BackgroundRefresh.StopSearchLoop(servicesControl);
+                        BackgroundRefresh.StopSearchLoop(servicesControl, this);
                         RefreshButtons("BothButtons");
                     }
                 }
@@ -96,10 +98,21 @@ namespace OracleServices
         }
 
 
+        public void PendingServicesNotification(bool pending)
+        {
+            systemTray.Icon = Properties.Resources.auto_pending_icon;
+
+            if (pending)
+                systemTray.BalloonTipText = "Starting Oracle Services. The program will freeze. Please wait";
+            else
+                systemTray.BalloonTipText = "Stopping Oracle Services. The program will freeze. Please wait";
+
+            systemTray.ShowBalloonTip(10);
+        }
+
+
         public void SystemTrayIconAndNotifications(bool run)
         {
-            systemTray.BalloonTipTitle = "Stopping Oracle Services - SOS";
-            
             if (run)
             {
                 systemTray.Icon = Properties.Resources.auto_running_icon;
