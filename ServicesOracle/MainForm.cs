@@ -143,17 +143,15 @@ namespace OracleServices
         {
             if (this.WindowState == FormWindowState.Minimized)
             {
-                this.FormBorderStyle = FormBorderStyle.FixedToolWindow;// Hide from Alt + Tab
-                ShowInTaskbar = false;
                 systemTray.Visible = true;
+                this.Hide();
             }
         }
 
 
         private void SystemTray_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            this.FormBorderStyle = FormBorderStyle.Sizable;
-            ShowInTaskbar = true;
+            this.Show();
             systemTray.Visible = true;
             WindowState = FormWindowState.Normal;
         }
