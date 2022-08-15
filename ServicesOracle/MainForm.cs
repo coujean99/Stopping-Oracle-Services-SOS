@@ -18,95 +18,79 @@ namespace OracleServices
         }
 
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void MainForm_Load(object sender, EventArgs e)
         {
-            chk_backgroundRun.Checked = Properties.Settings.Default.BackgroundRun;
-            chk_runAtStartup.Checked = Properties.Settings.Default.AtStartup;
-            chk_minimizeAtStartup.Checked = Properties.Settings.Default.MinimizeAtStartup;
+            chk_RunInBackground.Checked = Properties.Settings.Default.BackgroundRun;
+            chk_RunAtStartup.Checked = Properties.Settings.Default.AtStartup;
+            chk_MinimizeAtStartup.Checked = Properties.Settings.Default.MinimizeAtStartup;
 
             TextButtonsRefresh();
 
-            if (chk_backgroundRun.Checked)
-                chk_backgroundRun_CheckedChanged(null, EventArgs.Empty);
+            if (chk_RunInBackground.Checked) chk_RunInBackground_Click(null, EventArgs.Empty);
 
-
-            if (chk_minimizeAtStartup.Checked)
-                this.WindowState = FormWindowState.Minimized;
+            if (chk_MinimizeAtStartup.Checked) this.WindowState = FormWindowState.Minimized;
         }
 
 
         public void TextButtonsRefresh()
         {
-            btn_windowsStartup.Enabled = true;
-            btn_state.Enabled = true;
+            btn_ServicesOnStartup.Enabled = true;
+            btn_ServicesState.Enabled = true;
 
-            if (servicesControl.RunningServicesOnStartup)
-                btn_windowsStartup.Text = "Disable Oracle services on startup";
-            else
-                btn_windowsStartup.Text = "Enable Oracle services on startup";
+            if (servicesControl.RunningServicesOnStartup) btn_ServicesOnStartup.Text = "Disable Oracle services on startup";
+            else btn_ServicesOnStartup.Text = "Enable Oracle services on startup";
 
-            if (servicesControl.EnableServices)
-                btn_state.Text = "Disable Oracle services";
-            else
-                btn_state.Text = "Enable Oracle services";
+            if (servicesControl.EnableServices) btn_ServicesState.Text = "Disable Oracle services";
+            else btn_ServicesState.Text = "Enable Oracle services";
         }
 
 
-        private void btn_windowsStartup_Click(object sender, EventArgs e)
+        private void Btn_ServicesOnStartup_Click(object sender, EventArgs e)
         {
             servicesControl.BootStartingMethod(!servicesControl.RunningServicesOnStartup);
-            RefreshButtons("WindowsStartup");
+            RefreshingTextButtons(1);
         }
 
 
-        private void btn_state_Click(object sender, EventArgs e)
+        private void Btn_ServicesState_Click(object sender, EventArgs e)
         {
             servicesControl.StartStopServices(!servicesControl.EnableServices);
-            RefreshButtons("BackgroundRun");
+            RefreshingTextButtons(2);
         }
 
 
-        private void chk_backgroundRun_CheckedChanged(object sender, EventArgs e)
+        private void chk_RunInBackground_Click(object sender, EventArgs e)
         {
-            bool eventAllowed = true;
-
-            if (eventAllowed)
+            if (chk_RunInBackground.Checked)
             {
-                if (chk_backgroundRun.Checked)
-                {
-                    systemTray.Icon = Properties.Resources.auto_stopped_icon;
-                    btn_windowsStartup.Enabled = false;
-                    btn_state.Enabled = false;
+                systemTray.Icon = Properties.Resources.auto_stopped_icon;
+                btn_ServicesOnStartup.Enabled = false;
+                btn_ServicesState.Enabled = false;
 
-                    servicesControl.BootStartingMethod(false);
-                    BackgroundRefresh.StartSearchLoop(servicesControl, this);
-                }
-                else
-                {
-                    if (Process.GetProcessesByName("sqldeveloper64W").Length != 0)
-                    {
-                        eventAllowed = false;
-                        chk_backgroundRun.Checked = true;
-                    }
+                servicesControl.BootStartingMethod(false);
+                BackgroundRefresh.StartSearchLoop(servicesControl, this);
 
-                    if (Process.GetProcessesByName("sqldeveloper64W").Length == 0)
-                    {
-                        BackgroundRefresh.StopSearchLoop(servicesControl, this);
-                        RefreshButtons("BothButtons");
-                    }
+                if (Process.GetProcessesByName("sqldeveloper64W").Length != 0) systemTray.Icon = Properties.Resources.auto_running_icon;
+            }
+
+            else
+            {
+                if (Process.GetProcessesByName("sqldeveloper64W").Length == 0)
+                {
+                    BackgroundRefresh.StopSearchLoop(servicesControl, this);
+                    RefreshingTextButtons(3);
                 }
+                else chk_RunInBackground.CheckState = CheckState.Checked;
             }
         }
 
 
-        public void PendingServicesNotification(bool pending)
+        public void PendingOnOffServicesNotification(bool pending)
         {
             systemTray.Icon = Properties.Resources.auto_pending_icon;
 
-            if (pending)
-                systemTray.BalloonTipText = "Starting Oracle Services. The program will freeze. Please wait";
-            else
-                systemTray.BalloonTipText = "Stopping Oracle Services. The program will freeze. Please wait";
+            if (pending) systemTray.BalloonTipText = "Starting Oracle Services. The program will freeze. Please wait";
+            else systemTray.BalloonTipText = "Stopping Oracle Services. The program will freeze. Please wait";
 
             systemTray.ShowBalloonTip(10);
         }
@@ -129,18 +113,21 @@ namespace OracleServices
         }
 
 
-        public async Task RefreshButtons(string command)
+        public async Task RefreshingTextButtons(int command)
         {
-            if (command == "WindowsStartup" || command == "BothButtons")
+            // 1 - Services on stratup
+            // 2 - Service state
+            // 3 - Both
+            if (command == 1 || command == 3)
             {
-                btn_windowsStartup.Enabled = false;
-                btn_windowsStartup.Text = "Refreshing...";
+                btn_ServicesOnStartup.Enabled = false;
+                btn_ServicesOnStartup.Text = "Refreshing...";
             }
 
-            if (command == "BackgroundRun" || command == "BothButtons")
+            if (command == 2 || command == 3)
             {
-                btn_state.Enabled = false;
-                btn_state.Text = "Refreshing... please wait";
+                btn_ServicesState.Enabled = false;
+                btn_ServicesState.Text = "Refreshing... please wait";
             }
 
             await Task.Run(() => servicesControl.RefreshButtonsAwait(runningOracleService));
@@ -156,14 +143,16 @@ namespace OracleServices
         {
             if (this.WindowState == FormWindowState.Minimized)
             {
+                this.FormBorderStyle = FormBorderStyle.FixedToolWindow;// Hide from Alt + Tab
                 ShowInTaskbar = false;
                 systemTray.Visible = true;
             }
         }
 
 
-        private void systemTray_MouseDoubleClick(object sender, MouseEventArgs e)
+        private void SystemTray_MouseDoubleClick(object sender, MouseEventArgs e)
         {
+            this.FormBorderStyle = FormBorderStyle.Sizable;
             ShowInTaskbar = true;
             systemTray.Visible = true;
             WindowState = FormWindowState.Normal;
@@ -171,15 +160,15 @@ namespace OracleServices
 
 
         // On Windows Startup
-        private void chk_runAtStartup_CheckedChanged(object sender, EventArgs e) =>
-            servicesControl.TaskSheduler(chk_runAtStartup.Checked);
+        private void Chk_RunAtStartup_CheckedChanged(object sender, EventArgs e) =>
+            servicesControl.TaskSheduler(chk_RunAtStartup.Checked);
 
 
-        private void button1_Click(object sender, EventArgs e)
+        private void Btn_SaveSettings_Click(object sender, EventArgs e)
         {
-            Properties.Settings.Default.BackgroundRun = chk_backgroundRun.Checked;
-            Properties.Settings.Default.AtStartup = chk_runAtStartup.Checked;
-            Properties.Settings.Default.MinimizeAtStartup = chk_minimizeAtStartup.Checked;
+            Properties.Settings.Default.BackgroundRun = chk_RunInBackground.Checked;
+            Properties.Settings.Default.AtStartup = chk_RunAtStartup.Checked;
+            Properties.Settings.Default.MinimizeAtStartup = chk_MinimizeAtStartup.Checked;
             Properties.Settings.Default.Save();
         }
 

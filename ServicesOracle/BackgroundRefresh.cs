@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
+﻿using System.Diagnostics;
 
 namespace OracleServices
 {
@@ -21,17 +17,18 @@ namespace OracleServices
                     Debug.WriteLine("nothing");
                     if (servicesControl.EnableServices)
                     {
-                        mainForm.PendingServicesNotification(false);
+                        mainForm.PendingOnOffServicesNotification(false);
                         servicesControl.StartStopServices(false);
                         mainForm.SystemTrayIconAndNotifications(false);
                     }
                 }
+
                 else
                 {
                     Debug.WriteLine("run");
                     if (!servicesControl.EnableServices)
                     {
-                        mainForm.PendingServicesNotification(true);
+                        mainForm.PendingOnOffServicesNotification(true);
                         servicesControl.StartStopServices(true);
                         mainForm.SystemTrayIconAndNotifications(true);
                     }
@@ -44,11 +41,7 @@ namespace OracleServices
 
         public static void StartSearchLoop(ServicesControl servicesControl, MainForm mainForm)
         {
-            try
-            {
-                cts.Cancel();
-            }
-            catch (NullReferenceException e) { } // If the checkbox is checked and unchecked too fast
+            try { cts.Cancel(); } catch { } // If the checkbox is checked and unchecked too fast
             cts = new CancellationTokenSource();
             SearchLoop(cts.Token, servicesControl, mainForm);
         }

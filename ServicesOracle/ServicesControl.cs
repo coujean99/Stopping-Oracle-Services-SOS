@@ -1,11 +1,6 @@
-﻿using Task = System.Threading.Tasks.Task;
-using Microsoft.Win32.TaskScheduler;
-using System;
-using System.Collections.Generic;
+﻿using Microsoft.Win32.TaskScheduler;
 using System.Diagnostics;
-using System.Linq;
 using System.ServiceProcess;
-using System.Text;
 
 namespace OracleServices
 {
@@ -75,8 +70,7 @@ namespace OracleServices
                     service.Start();
                 }
 
-                if (service.DisplayName.Equals("OracleServiceXE"))
-                    RefreshButtonsAwait(service);
+                if (service.DisplayName.Equals("OracleServiceXE")) RefreshButtonsAwait(service);
             }
         }
 
@@ -95,8 +89,7 @@ namespace OracleServices
                     td.Actions.Add(new ExecAction(Application.ExecutablePath));
                     ts.RootFolder.RegisterTaskDefinition(@"StoppingOracleServices", td);
                 }
-                else
-                    ts.RootFolder.DeleteTask("StoppingOracleServices");
+                else ts.RootFolder.DeleteTask("StoppingOracleServices");
             }
         }
 
