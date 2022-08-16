@@ -87,9 +87,10 @@ namespace OracleServices
                     td.Principal.RunLevel = TaskRunLevel.Highest;
                     td.Triggers.Add(new LogonTrigger());
                     td.Actions.Add(new ExecAction(Application.ExecutablePath));
-                    ts.RootFolder.RegisterTaskDefinition(@"StoppingOracleServices", td);
+                    td.Settings.DisallowStartIfOnBatteries = false;
+                    ts.RootFolder.RegisterTaskDefinition("StoppingOracleServices", td);
                 }
-                else ts.RootFolder.DeleteTask("StoppingOracleServices");
+                else if (ts.GetTask("StoppingOracleServices") != null) ts.RootFolder.DeleteTask("StoppingOracleServices");                    
             }
         }
 

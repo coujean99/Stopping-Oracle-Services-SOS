@@ -20,8 +20,8 @@ namespace OracleServices
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            chk_RunInBackground.Checked = Properties.Settings.Default.BackgroundRun;
-            chk_RunAtStartup.Checked = Properties.Settings.Default.AtStartup;
+            chk_RunInBackground.Checked = Properties.Settings.Default.RunInBackground;
+            chk_RunAtStartup.Checked = Properties.Settings.Default.RunAtStartup;
             chk_MinimizeAtStartup.Checked = Properties.Settings.Default.MinimizeAtStartup;
 
             TextButtonsRefresh();
@@ -157,17 +157,14 @@ namespace OracleServices
         }
 
 
-        // On Windows Startup
-        private void Chk_RunAtStartup_CheckedChanged(object sender, EventArgs e) =>
-            servicesControl.TaskSheduler(chk_RunAtStartup.Checked);
-
-
         private void Btn_SaveSettings_Click(object sender, EventArgs e)
         {
-            Properties.Settings.Default.BackgroundRun = chk_RunInBackground.Checked;
-            Properties.Settings.Default.AtStartup = chk_RunAtStartup.Checked;
+            Properties.Settings.Default.RunInBackground = chk_RunInBackground.Checked;
+            Properties.Settings.Default.RunAtStartup = chk_RunAtStartup.Checked;
             Properties.Settings.Default.MinimizeAtStartup = chk_MinimizeAtStartup.Checked;
             Properties.Settings.Default.Save();
+
+            servicesControl.TaskSheduler(chk_RunAtStartup.Checked);
         }
 
 
