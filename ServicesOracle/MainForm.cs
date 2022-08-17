@@ -143,6 +143,7 @@ namespace OracleServices
         {
             if (this.WindowState == FormWindowState.Minimized)
             {
+                ShowInTaskbar = false;
                 systemTray.Visible = true;
                 this.Hide();
             }
@@ -153,6 +154,7 @@ namespace OracleServices
         {
             this.Show();
             systemTray.Visible = true;
+            ShowInTaskbar = true;
             WindowState = FormWindowState.Normal;
         }
 
