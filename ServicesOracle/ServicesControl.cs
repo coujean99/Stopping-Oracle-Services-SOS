@@ -88,6 +88,7 @@ namespace OracleServices
                     td.Triggers.Add(new LogonTrigger());
                     td.Actions.Add(new ExecAction(Application.ExecutablePath));
                     td.Settings.DisallowStartIfOnBatteries = false;
+                    td.Settings.StopIfGoingOnBatteries = false;
                     ts.RootFolder.RegisterTaskDefinition("StoppingOracleServices", td);
                 }
                 else if (ts.GetTask("StoppingOracleServices") != null) ts.RootFolder.DeleteTask("StoppingOracleServices");                    
