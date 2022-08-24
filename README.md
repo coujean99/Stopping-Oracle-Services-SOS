@@ -10,6 +10,8 @@
 <!-- OracleOraDB -->
 <!-- OracleServiceXE -->
 
+**Requires .NET 6.0**
+
 **Oracle Services - SOS** is a simple window to help users to turn off Oracle Services or even to disable them. It will reduce your computer consumption and might runs even faster.
 
 This small program is perfect for those who run Oracle on their laptop.
