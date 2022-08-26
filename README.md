@@ -35,7 +35,7 @@ Even more simple:
 - Don't forget to **save** 😉
 
 ### Precisions
-The *"Run in background"* option turns off *"Oracle Services at Windows startup"* by default. The buttons get *gray* and a loop is searching at every 3 seconds if *sqldeveloper64W.exe* runs. **You can't disable it as long as *Oracle SQL Developer* runs!**
+The *"Run in background"* option turns off *"Oracle Services at Windows startup"* by default. The buttons get *gray* and a loop is searching at every 4 seconds if *sqldeveloper64W.exe* runs. **You can't disable it as long as *Oracle SQL Developer* runs!**
 
 *"Run at Windows startup"* will add a new task to the Task Scheduler named *"StoppingOracleServices"*. That's why you need to run SOS as admin.
 
