@@ -36,8 +36,7 @@ namespace OracleServices
                     this.RunningServicesOnStartup = true;
                     startupType = "auto";
                 }
-
-                if (!startupRun)
+                else
                 {
                     this.RunningServicesOnStartup = false;
                     startupType = "demand";

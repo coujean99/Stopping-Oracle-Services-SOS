@@ -77,6 +77,7 @@ namespace OracleServices
             {
                 if (Process.GetProcessesByName("sqldeveloper64W").Length == 0)
                 {
+					systemTray.Icon = Properties.Resources.default_icon;
                     BackgroundRefresh.StopSearchLoop(servicesControl, this);
                     RefreshingTextButtons(3);
                 }
