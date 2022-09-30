@@ -41,7 +41,7 @@ namespace OracleServices
 
         public static void StartSearchLoop(ServicesControl servicesControl, MainForm mainForm)
         {
-            try { cts.Cancel(); } catch { } // If the checkbox is checked and unchecked too fast
+            cts?.Cancel(); // If the checkbox is checked and unchecked too fast
             cts = new CancellationTokenSource();
             SearchLoop(cts.Token, servicesControl, mainForm);
         }

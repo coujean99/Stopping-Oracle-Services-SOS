@@ -2,10 +2,10 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="OracleServices.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="AtStartup" Type="System.Boolean" Scope="User">
+    <Setting Name="RunAtStartup" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="BackgroundRun" Type="System.Boolean" Scope="User">
+    <Setting Name="RunInBackground" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="MinimizeAtStartup" Type="System.Boolean" Scope="User">
